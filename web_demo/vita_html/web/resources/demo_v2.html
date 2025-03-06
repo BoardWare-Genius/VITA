@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VITA 交互终端</title>
+    <script src="https://unpkg.com/socket.io-client@4.8.1/dist/socket.io.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #ecf0f1;
+            display: grid;
+            grid-template-columns: 1fr;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .logo {
+            /* 设置 Logo 的宽度 */
+            width: 300px; 
+            /* 自动调整高度以保持比例 */
+            height: auto; 
+            /* 居中显示 */
+            display: block; 
+            margin: 0 auto 20px; 
+            background-blend-mode: multiply;
+        }
+
+        /* .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        } */
+        .dashboard {
+            /* 其他已有样式保持不变 */
+            text-align: center;
+            background: url("{{ url_for('static', filename='bw-background-image.jpg') }}"); /* 将 'your-image-url.jpg' 替换为你实际的图片路径 */
+            background-size: cover; /* 让背景图覆盖整个容器 */
+            background-position: center; /* 背景图居中显示 */
+            background-repeat: no-repeat; /* 背景图不重复 */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            /* width: 800px; */
+            overflow-x: hidden;
+            color: #ffffff; /* 修改为你想要的颜色，这里是蓝色 */
+        }
+
+        .control-panel {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .video-section {
+            grid-column: 1;
+            position: relative;
+            background: #2c3e50;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .waveform-section {
+            grid-column: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        canvas {
+            background: var(--primary-color);
+            border-radius: 6px;
+            width: 100% !important;
+        }
+
+        .video-canvas {
+            aspect-ratio: 16/9;
+        }
+
+        .control-button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .control-button.primary {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .control-button.danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .control-button.success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .status-indicator {
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-active {
+            background: var(--success-color);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(39, 174, 96, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+        }
+
+        .alert-banner {
+            padding: 1rem;
+            border-radius: 6px;
+            color: white;
+            margin-top: 1rem;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .video-section,
+            .waveform-section {
+                grid-column: 1 / -1;
+            }
+            
+            .control-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <img src="{{ url_for('static', filename='bw-logo.png') }}" alt="Logo" class="logo">
+        <h1>Macao TourOmni</h1>
+        <div class="control-panel">
+            <button class="control-button primary" id="startButton">
+                <span class="status-indicator"></span>启动对话
+            </button>
+            <button class="control-button danger" id="stopButton" disabled>
+                <span class="status-indicator"></span>结束对话
+            </button>
+            <button class="control-button primary" id="startVideoButton">
+                📷 启动视频
+            </button>
+            <button class="control-button danger" id="stopVideoButton" disabled>
+                📷 停止视频
+            </button>
+            <button class="control-button success" id="clearHistoryButton">
+                🗑️ 清除记录
+            </button>
+        </div>
+
+        <div class="video-section">
+            <video id="videoElement" autoplay playsinline style="display: none;"></video>
+            <canvas class="video-canvas" id="videoCanvas" width="800" height="450"></canvas>
+            <canvas id="hiddenCanvas" style="display: none;"></canvas>
+        </div>
+
+        <div class="waveform-section">
+            <div class="waveform-group">
+                <h3>输入音频波形</h3>
+                <canvas id="inputCanvas" height="80"></canvas>
+            </div>
+            <div class="waveform-group">
+                <h3>输出音频波形</h3>
+                <canvas id="outputCanvas" height="80"></canvas>
+            </div>
+        </div>
+
+        <div class="alert-banner" id="alertBox">⚠️ 连接人数过多，请稍后重试</div>
+        <div class="alert-banner" id="alertBox2">⏳ 连接超时，请重新连接</div>
+        <div class="alert-banner" id="alertBox3">✅ 提示设置成功</div>
+    </div>
+
+    <audio id="remoteAudio" autoplay playsinline></audio>
+
+    <!-- 保留原始JavaScript代码（完整未修改） -->
+    <script>
+        const remoteAudio = document.getElementById('remoteAudio');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const inputCanvas = document.getElementById('inputCanvas');
+        const outputCanvas = document.getElementById('outputCanvas');
+        const inputCtx = inputCanvas.getContext('2d');
+        const outputCtx = outputCanvas.getContext('2d');
+        const alertBox = document.getElementById('alertBox');
+        const alertBox2 = document.getElementById('alertBox2');
+        const alertBox3 = document.getElementById('alertBox3');
+        const socket = io();
+        const audioQueue = [];
+        let isPlaying = false;
+        let currentSource = null;
+
+        let localStream;
+        let audioContext;
+        let audioContext2;
+        let audioWorklet;
+        let isRecording = false;
+        const fixedSampleRate = 16000;
+
+        const videoElement = document.getElementById('videoElement');
+        const videoCanvas = document.getElementById('videoCanvas');
+        const videoCtx = videoCanvas.getContext('2d');
+        const hiddenCanvas = document.getElementById('hiddenCanvas');
+        const hiddenCtx = hiddenCanvas.getContext('2d');
+        let videoStream = null;
+        let isVideoStarted = false;
+
+        const startVideoButton = document.getElementById('startVideoButton');
+        const stopVideoButton = document.getElementById('stopVideoButton');
+        let videoInterval = null;
+
+        const clearHistoryButton = document.getElementById('clearHistoryButton');
+
+        startButton.addEventListener('click', startRecording);
+        stopButton.addEventListener('click', stopRecording);
+        startVideoButton.addEventListener('click', startVideo);
+        stopVideoButton.addEventListener('click', stopVideo);
+        clearHistoryButton.addEventListener('click', clearHistory);
+
+        audioContext2 = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+
+        async function initAudioWorklet() {
+            try {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: fixedSampleRate });
+                    await audioContext.audioWorklet.addModule('../static/js/audio-processor.js');
+                }
+            } catch (error) {
+                console.error('Error initializing audio worklet:', error);
+                throw error;
+            }
+        }
+        async function startRecording() {
+            try {
+                // 清理之前的音频队列和源
+                audioQueue.length = 0;
+                if (currentSource) {
+                    currentSource.stop();
+                    currentSource = null;
+                }
+                isPlaying = false;
+                
+                // 确保之前的 audioContext 完全关闭
+                if (audioContext) {
+                    await audioContext.close();
+                    audioContext = null;
+                }
+                
+                // 确保之前的音频流完全停止
+                if (localStream) {
+                    localStream.getTracks().forEach(track => track.stop());
+                }
+
+                // 获取新的音频流
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            autoGainControl: false, 
+                            echoCancellation: true, 
+                            noiseSuppression: true, 
+                            latency: 0.001
+                        }
+                    });
+                } catch (mediaError) {
+                    showTemporaryAlert(`无法访问麦克风: ${mediaError.message}。请确保已授予麦克风权限。`);
+                }
+
+                // 初始化新的音频上下文
+                try {
+                    await initAudioWorklet();
+                } catch (workletError) {
+                    showTemporaryAlert(`音频处理初始化失败: ${workletError.message}`);
+                }
+                
+                const input = audioContext.createMediaStreamSource(localStream);
+                audioWorklet = new AudioWorkletNode(audioContext, 'audio-processor', {
+                    processorOptions: {},
+                    numberOfInputs: 1,
+                    numberOfOutputs: 1,
+                    channelCount: 1,
+                    outputChannelCount: [1],
+                    bufferSize: 256
+                });
+
+                audioWorklet.port.postMessage({
+                    command: 'setRecording',
+                    value: true
+                });
+
+                audioWorklet.port.onmessage = (e) => {
+                    if (!isRecording) return;
+                    
+                    const { audio, inputData } = e.data;
+                    socket.emit('audio', JSON.stringify({ 
+                        sample_rate: audioContext.sampleRate, 
+                        audio: audio 
+                    }));
+                    drawWaveform(new Float32Array(inputData), inputCtx);
+                };
+
+                input.connect(audioWorklet);
+                audioWorklet.connect(audioContext.destination);
+
+                isRecording = true;
+                startButton.disabled = true;
+                stopButton.disabled = false;
+
+                socket.emit('recording-started');
+            } catch (error) {
+                console.error('Error starting recording:', error);
+                // 发生错误时重置状态
+                isRecording = false;
+                startButton.disabled = false;
+                stopButton.disabled = true;
+            }
+        }
+
+        function stopRecording() {
+            try {
+                // 清理音频队列和源
+                audioQueue.length = 0;
+                if (currentSource) {
+                    currentSource.stop();
+                    currentSource = null;
+                }
+                isPlaying = false;
+                isRecording = false;
+                
+                // 停止并断开 audioWorklet
+                if (audioWorklet) {
+                    audioWorklet.port.postMessage({
+                        command: 'setRecording',
+                        value: false
+                    });
+                    audioWorklet.disconnect();
+                    audioWorklet = null;
+                }
+                
+                // 停止所有音频轨道
+                if (localStream) {
+                    localStream.getTracks().forEach(track => track.stop());
+                    localStream = null;
+                }
+
+                // 关闭音频上下文
+                if (audioContext) {
+                    audioContext.close().then(() => {
+                        audioContext = null;
+                    });
+                }
+                
+                startButton.disabled = false;
+                stopButton.disabled = true;
+
+                socket.emit('recording-stopped');
+            } catch (error) {
+                console.error('Error stopping recording:', error);
+            }
+        }
+
+        function showTemporaryAlert(message, timeout = 1000) {
+            alert(message);
+            setTimeout(() => {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(alert => {
+                    alert.style.display = 'none';
+                });
+            }, timeout);
+        }
+
+        socket.on('too_many_users', (data) => {
+            showTemporaryAlert('Too many users connected. Please refresh and try again.');
+        });
+
+        socket.on('out_time', (data) => {
+            alert('Connect time out. Please refresh and reconnect.');
+        });
+
+        socket.on('prompt_success', (data) => {
+            alert('Prompt set success. Please restart interaction.');
+        });
+        
+        socket.on('audio', (data) => {
+            audioQueue.push(data);
+            if (!isPlaying) {
+                playNextAudio();
+            }
+        });
+
+        socket.on('stop_tts', () => {
+            stopTTS();
+        });
+
+        function stopTTS() {
+            audioQueue.length = 0;
+            if (currentSource) {
+                currentSource.stop();
+                currentSource = null;
+            }
+            isPlaying = false;
+        }
+
+        function playNextAudio() {
+            if (audioQueue.length === 0) {
+                isPlaying = false;
+                return;
+            }
+
+            isPlaying = true;
+            const data = audioQueue.shift();
+            const audioBuffer = audioContext2.createBuffer(1, data.byteLength / 2, audioContext2.sampleRate);
+            const float32Array = new Float32Array(data.byteLength / 2);
+            const int16Array = new Int16Array(data);
+            for (let i = 0; i < int16Array.length; i++) {
+                float32Array[i] = int16Array[i] / 0x7FFF;
+            }
+            drawWaveform(float32Array, outputCtx);
+            audioBuffer.copyToChannel(float32Array, 0);
+            const source = audioContext2.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContext2.destination);
+            source.start();
+
+            currentSource = source;
+
+            source.onended = () => {
+                currentSource = null;
+                playNextAudio();
+            };
+        }
+
+        function drawWaveform(data, context) {
+            context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+            context.beginPath();
+            context.moveTo(0, context.canvas.height / 2);
+            for (let i = 0; i < data.length; i++) {
+                const x = (i / data.length) * context.canvas.width;
+                const y = (1 - data[i]) * context.canvas.height / 2;
+                context.lineTo(x, y);
+            }
+            context.stroke();
+        }
+
+        async function startVideo() {
+            try {
+                let isFrontCamera = false;
+                // 尝试先获取后置摄像头
+                try {
+                    videoStream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: { exact: "environment" }
+                        }
+                    });
+                    isFrontCamera = false;
+                } catch (err) {
+                    // 如果没有后置摄像头或获取失败，则使用前置摄像头
+                    console.log('后置摄像头不可用，切换到前置摄像头');
+                    videoStream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: "user"
+                        }
+                    });
+                    isFrontCamera = true;
+                }
+                
+                // 根据摄像头类型设置镜像效果
+                videoCanvas.style.transform = isFrontCamera ? 'scaleX(-1)' : 'none';
+                
+                const videoTrack = videoStream.getVideoTracks()[0];
+                const settings = videoTrack.getSettings();
+                
+                // 计算合适的显示尺寸，保持宽高比
+                const containerWidth = videoCanvas.parentElement.clientWidth;
+                const maxWidth = Math.min(600, containerWidth);
+                const aspectRatio = settings.width / settings.height;
+                
+                let displayWidth = maxWidth;
+                let displayHeight = Math.round(displayWidth / aspectRatio);
+                
+                videoCanvas.style.width = `${displayWidth}px`;
+                videoCanvas.style.height = `${displayHeight}px`;
+                
+                videoCanvas.width = settings.width;
+                videoCanvas.height = settings.height;
+                
+                videoElement.srcObject = videoStream;
+                videoElement.style.display = 'none';
+                
+                requestAnimationFrame(updateVideoCanvas);
+                
+                startVideoButton.disabled = true;
+                stopVideoButton.disabled = false;
+                
+                videoInterval = setInterval(sendVideoFrame, 500);
+            } catch (error) {
+                console.error('Error starting video:', error);
+                alert('无法启动摄像头：' + error.message);
+            }
+        }
+        
+        function updateVideoCanvas() {
+            if (videoStream) {
+                videoCtx.drawImage(videoElement, 0, 0, videoCanvas.width, videoCanvas.height);
+                requestAnimationFrame(updateVideoCanvas);
+            }
+        }
+        
+        function stopVideo() {
+            if (videoInterval) {
+                clearInterval(videoInterval);
+                videoInterval = null;
+            }
+            
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            
+            videoElement.srcObject = null;
+            startVideoButton.disabled = false;
+            stopVideoButton.disabled = true;
+        }
+        
+        function sendVideoFrame() {
+            hiddenCtx.drawImage(videoElement, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
+            const imageData = hiddenCanvas.toDataURL('image/jpeg', 0.7);
+            socket.emit('video_frame', imageData);
+        }
+
+        function clearHistory() {
+            socket.emit('reset_state');
+            stopRecording();
+            stopVideo();
+            stopTTS();
+            showTemporaryAlert('对话历史已清除');
+            playNextAudio();
+        }
+    </script>
+</body>
+</html>

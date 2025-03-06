@@ -1,0 +1,7 @@
+*.safetensors
+*demo_VITA_ckpt*/
+chat_history/
+userdata/
+wandb/
+__pycache__/
+@eaDir/
