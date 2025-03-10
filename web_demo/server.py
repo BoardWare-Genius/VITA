@@ -793,7 +793,7 @@ def send_pcm(sid, request_inputs_queue):
 
 @app.route('/')
 def index():
-    return render_template('demo.html')
+    return render_template('demo_v2.html')
 
 @socketio.on('connect')
 def handle_connect():

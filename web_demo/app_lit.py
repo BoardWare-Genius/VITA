@@ -568,7 +568,7 @@ def load_model(model_path = './demo_VITA_ckpt/'):
         dtype="float16",
         tensor_parallel_size=1,
         trust_remote_code=True,
-        gpu_memory_utilization=0.5,
+        gpu_memory_utilization=0.8,
         disable_custom_all_reduce=True,
         limit_mm_per_prompt={'image':256,'audio':50}
     )  
