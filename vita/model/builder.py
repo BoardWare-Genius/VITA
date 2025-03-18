@@ -218,9 +218,9 @@ def load_pretrained_model(
             model = VITAFOQwen2ForCausalLM.from_pretrained(
                 model_path, low_cpu_mem_usage=True, **kwargs
             )
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     model.resize_token_embeddings(len(tokenizer))
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     
     vision_tower = model.get_vision_tower()
     if not vision_tower.is_loaded:
