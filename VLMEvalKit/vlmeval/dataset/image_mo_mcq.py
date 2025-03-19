@@ -8,7 +8,7 @@ from ..smp import *
 class TourMCQ(ImageMCQDataset):
     TYPE = 'MCQ'
 
-    DATASET_URL = {'TOUR-MO': '/Dataset/Domain/LMUData/test/TourMO_MCQ.json',
+    DATASET_URL = {'TOUR-MO': '/iivanwu/data/test/TourMO_MCQ.json',
                    'YUE-MMLU' : '/Dataset/Domain/LMUData/yue_benchmark_v1/Yue-MMLU'
                    }
 
@@ -19,14 +19,20 @@ class TourMCQ(ImageMCQDataset):
 
     def load_data(self, dataset):
         data_path = self.DATASET_URL[dataset]
-        if dataset == 'YUE-MMLU':
-            data_list = []
-            for file_name in os.listdir(data_path):
-                dat = pd.DataFrame(load(osp.join(data_path,file_name)))
-                data_list.append(dat)
-            data = pd.concat(data_list)
-            data['index'] = data.index
-        else:
-            data = pd.DataFrame(load(data_path))
-            data['index'] = data['no']      
+        tsv_file = data_path.replace('.json','.tsv')
+        # file_md5 = self.DATASET_MD5[dataset] if dataset in self.DATASET_MD5 else None
+        data = pd.DataFrame(load(data_path))
+        data.reset_index(inplace=True,drop=True)
+        data['index'] = data.index
+        path_prefix = osp.dirname(data_path)
+        data['image_path'] = data['image_path'].apply(lambda x: x.replace('./',path_prefix+'/'))
+        # data['image_path'] = data['image_path'].apply(lambda x: osp.join(path_prefix,x))
+        data.to_csv(tsv_file, sep='\t',index=False)
+        if file_size(data_path, 'GB') > 1:
+            local_path = tsv_file.replace('.tsv', '_local.tsv')
+            if not osp.exists(local_path) or os.environ.get('FORCE_LOCAL', None) or update_flag:
+                from vlmeval.tools import LOCALIZE
+                LOCALIZE(data_path, local_path)
+            data_path = local_path
+        import pdb; pdb.set_trace()
         return data
