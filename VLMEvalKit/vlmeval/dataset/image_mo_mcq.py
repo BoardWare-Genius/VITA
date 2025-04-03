@@ -34,5 +34,5 @@ class TourMCQ(ImageMCQDataset):
                 from vlmeval.tools import LOCALIZE
                 LOCALIZE(data_path, local_path)
             data_path = local_path
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         return data

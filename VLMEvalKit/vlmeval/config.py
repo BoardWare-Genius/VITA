@@ -140,7 +140,7 @@ llava_series = {
 vita_series = { 
     'vita': partial(VITA, model_path='/path/to/model'),
     # 'vita_qwen2_yue': partial(VITAQwen2, model_path='/Model/LoRA/VITA/llava-s3-finetune_task_neg/'),
-    'vita_qwen2': partial(VITAQwen2, model_path='/Model/Weight/VITA-MLLM/VITA-1.5/'),
+    'vita_qwen2': partial(VITAQwen2, model_path='/defaultShare/storage/models/VITA-1.5/'),
     'vita_qwen2_yue': partial(VITAQwen2, model_path='/Model/Merged/VITA/Yue_2025_1_27/'),
 }
 
