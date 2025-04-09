@@ -6,10 +6,10 @@ def get_score(model, dataset, out_dir = './outputs'):
     file_name = f'{out_dir}/{model}/{model}_{dataset}'
     if listinstr([
         'CCBench', 'MMBench', 'SEEDBench_IMG', 'MMMU', 'ScienceQA', 
-        'AI2D_TEST', 'MMStar', 'RealWorldQA', 'BLINK', 'YUE-ARC-C','YUE-MMLU'
+        'AI2D_TEST', 'MMStar', 'RealWorldQA', 'BLINK', 'YUE-ARC-C','YUE-MMLU','TOUR-MO-V','TOUR-MO-ENT'
     ], dataset):
         file_name += '_acc.csv'
-    elif listinstr(['MME', 'Hallusion', 'LLaVABench'], dataset):
+    elif listinstr(['MME', 'Hallusion', 'LLaVABench','TOUR-YN'], dataset):
         file_name += '_score.csv'
     elif listinstr(['MMVet', 'MathVista'], dataset):
         file_name += '_gpt-4-turbo_score.csv'
@@ -37,7 +37,7 @@ def get_score(model, dataset, out_dir = './outputs'):
                 ret['MMBench_DEV_CN'] = a * 100
             elif n == 'test':
                 ret['MMBench_TEST_CN'] = a * 100
-    elif listinstr(['SEEDBench', 'ScienceQA', 'MMBench', 'AI2D_TEST', 'MMStar', 'RealWorldQA', 'BLINK','YUE-ARC-C','YUE-MMLU'], dataset):
+    elif listinstr(['SEEDBench', 'ScienceQA', 'MMBench', 'AI2D_TEST', 'MMStar', 'RealWorldQA', 'BLINK','YUE-ARC-C','YUE-MMLU','TOUR-MO-V','TOUR-MO-ENT'], dataset):
         ret[dataset] = data['Overall'][0] * 100
     elif 'MME' == dataset:
         ret[dataset] = data['perception'][0] + data['reasoning'][0]
@@ -59,7 +59,8 @@ def get_score(model, dataset, out_dir = './outputs'):
         ret[dataset] = float(data['Relative Score (main)'])
     elif 'OCRBench' in dataset:
         ret[dataset] = data['Final Score']
-     
+    elif 'TOUR-YN' in dataset:
+        ret[dataset] = float(data['Overall'][0])
     return ret
 
 def parse_args():
