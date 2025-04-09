@@ -10,9 +10,9 @@ class TourYN(ImageYORNDataset):
 
     DATASET_URL = {
         # Lanchao
-        # 'TOUR-YN': '/iivanwu/data/test/TourMO_MCQ.json',
+        'TOUR-YN': '/iivanwu/data/LMUData/test/TourMO_Entity_YN.json',
         # Zstack
-        'TOUR-YN': '/Dataset/Domain/LMUData/test/TourMO_Entity_YN.json',
+        # 'TOUR-YN': '/Dataset/Domain/LMUData/test/TourMO_Entity_YN.json',
     }
 
     DATASET_MD5 = {

@@ -141,11 +141,12 @@ vita_series = {
     'vita': partial(VITA, model_path='/path/to/model'),
     # 'vita_qwen2_yue': partial(VITAQwen2, model_path='/Model/LoRA/VITA/llava-s3-finetune_task_neg/'),
     # Langchao
-    # 'vita_qwen2': partial(VITAQwen2, model_path='/defaultShare/storage/models/VITA-1.5/'),
-    # 'vita_qwen2_yue': partial(VITAQwen2, model_path='/Model/Merged/VITA/Yue_2025_1_27/'),
-    # Zstack
-    'vita_qwen2': partial(VITAQwen2, model_path='/Model/Weight/VITA-MLLM/VITA-1.5/'),
+    'vita_qwen2': partial(VITAQwen2, model_path='/defaultShare/storage/models/VITA-1.5/'),
     'vita_qwen2_yue': partial(VITAQwen2, model_path='/Model/Merged/VITA/Yue_2025_1_27/'),
+    'vita_qwen2_mo': partial(VITAQwen2, model_path='/iivanwu/tmp/20250405_lora_merged_model/'),
+    # Zstack
+    # 'vita_qwen2': partial(VITAQwen2, model_path='/Model/Weight/VITA-MLLM/VITA-1.5/'),
+    # 'vita_qwen2_yue': partial(VITAQwen2, model_path='/Model/Merged/VITA/Yue_2025_1_27/'),
 }
 
 vita_vllm_series = { 

@@ -10,10 +10,11 @@ class TourMCQ(ImageMCQDataset):
 
     DATASET_URL = {
                 # Lanchao
-                # 'TOUR-MO': '/iivanwu/data/test/TourMO_MCQ.json',
+                'TOUR-MO-V': '/iivanwu/data/LMUData/test/TourMO_V_MCQ.json',
+                'TOUR-MO-ENT': '/iivanwu/data/LMUData/test/TourMO_Entity_MCQ.json',
                 # Zstack
-                'TOUR-MO-V': '/Dataset/Domain/LMUData/test/TourMO_V_MCQ.json',
-                'TOUR-MO-ENT': '/Dataset/Domain/LMUData/test/TourMO_Entity_MCQ.json',
+                #'TOUR-MO-V': '/Dataset/Domain/LMUData/test/TourMO_V_MCQ.json',
+                #'TOUR-MO-ENT': '/Dataset/Domain/LMUData/test/TourMO_Entity_MCQ.json',
                 }
 
     DATASET_MD5 = {}
