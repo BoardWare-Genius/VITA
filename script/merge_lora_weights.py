@@ -14,7 +14,7 @@ def merge_lora(args):
     # import pdb; pdb.set_trace()
     model._hf_peft_config_loaded = False
     model.save_pretrained(args.save_model_path)
-    # tokenizer.save_pretrained(args.save_model_path)
+    tokenizer.save_pretrained(args.save_model_path)
 
 
 if __name__ == "__main__":
